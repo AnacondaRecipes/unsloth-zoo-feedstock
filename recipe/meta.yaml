@@ -16,6 +16,10 @@ build:
   # cut_cross_entropy requires python >=3.10
   skip: true  # [py<310]
   script:
+    # Relax upstream upper caps that pkgs/main exceeds (trl 1.4.0, datasets 4.8.2) so the
+    # built wheel's metadata matches the recipe run deps and `pip check` passes.
+    - sed -i 's/trl>=0.18.2,!=0.19.0,<=0.24.0/trl>=0.18.2/' pyproject.toml
+    - sed -i 's/datasets>=3.4.1,!=4.0\.\*,!=4.1.0,<4.4.0/datasets>=3.4.1/' pyproject.toml
     - {{ PYTHON }} -m pip install . --no-deps --no-build-isolation -vv
 
 requirements:
@@ -53,8 +57,8 @@ requirements:
     - filelock
 
 test:
-  # importing unsloth_zoo patches torch/transformers and expects a CUDA runtime,
-  # so a bare import is not a reliable smoke test (mirrors conda-forge's unsloth recipe).
+  # No import test: unsloth_zoo/__init__.py raises ImportError unless `unsloth` is
+  # installed, which is circular (unsloth depends on unsloth_zoo). pip check only.
   commands:
     - pip check
   requires:
@@ -77,5 +81,8 @@ extra:
   skip-lints:
     # pytorch/torchao/triton are CBC-pinned runtime-only deps (pure-Python; not linked at build)
     - cbc_dep_in_run_missing_from_host
+    # No import test: `import unsloth_zoo` raises ImportError unless `unsloth` is installed
+    # (unsloth_zoo/__init__.py), which is circular (unsloth depends on unsloth_zoo). pip check only.
+    - missing_imports_or_run_test_py
   recipe-maintainers:
     - xkong-anaconda
