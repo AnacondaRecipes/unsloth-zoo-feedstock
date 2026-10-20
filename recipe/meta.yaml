@@ -1,47 +1,48 @@
 {% set name = "unsloth_zoo" %}
-{% set version = "2026.6.6" %}
+{% set version = "2026.10.6" %}
 
 package:
-  name: {{ name|lower }}
+  name: {{ name }}
   version: {{ version }}
 
 source:
-  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/unsloth_zoo-{{ version }}.tar.gz
-  sha256: 6de86389640bde9afab5c770e5fc6de982b89a1d2179f7c5c4a6b057630c146e
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+  sha256: f5fa45f17724245c2e4261188be3307384c0d90d6bac2d032332942603e7d4ef
 
 build:
   number: 0
-  # triton + cut_cross_entropy (hard runtime deps) are only available on linux-64 on pkgs/main
-  skip: true  # [not linux64]
-  # cut_cross_entropy requires python >=3.10
-  skip: true  # [py<310]
+  # linux-64 only: triton and cut_cross_entropy (hard runtime deps) exist only for linux-64
+  # on pkgs/main. py 3.10-3.14: upstream requires-python is >=3.9,<3.15 and cut_cross_entropy
+  # is declared for python >=3.10 only.
+  skip: true  # [not linux64 or py<310 or py>314]
   script:
-    # Relax upstream upper caps that pkgs/main exceeds (trl 1.4.0, datasets 4.8.2) so the
-    # built wheel's metadata matches the recipe run deps and `pip check` passes.
-    - sed -i 's/trl>=0.18.2,!=0.19.0,<=0.24.0/trl>=0.18.2/' pyproject.toml
-    - sed -i 's/datasets>=3.4.1,!=4.0\.\*,!=4.1.0,<4.4.0/datasets>=3.4.1/' pyproject.toml
     - {{ PYTHON }} -m pip install . --no-deps --no-build-isolation -vv
 
 requirements:
   host:
     - python
     - pip
-    - setuptools
-    - setuptools-scm
-    - wheel
+    # pyproject.toml [build-system].requires: setuptools==84.0.0, setuptools-scm==9.2.0.
+    # 9.2.0 is not on pkgs/main; the version is attr-based so setuptools-scm is inert here.
+    - setuptools 84.0.0
+    - setuptools-scm 9.2.2
   run:
     - python
-    - pytorch >=2.4.0
-    - torchao >=0.13.0
-    - triton >=3.0.0
+    # pyproject.toml [project.dependencies] at 2026.10.6 (linux-64 bounds; the darwin-arm64
+    # mlx/mlx-lm/mlx-vlm entries do not apply). Upper caps are upstream's and all solve on
+    # pkgs/main now (trl 1.5.1, datasets 4.8.4, transformers 5.17.0, pytorch 2.14.1).
+    - pytorch >=2.4.0,<2.15.0  # analint: cbc_dep_in_run_missing_from_host  # runtime-only, nothing links torch at build
+    - torchao >=0.13.0  # analint: cbc_dep_in_run_missing_from_host  # runtime-only, pure Python
+    - triton >=3.0.0  # analint: cbc_dep_in_run_missing_from_host  # runtime-only, pure Python
     - tyro
     - accelerate >=0.34.1
-    - trl >=0.18.2
-    - peft >=0.18.0
+    - trl >=0.18.2,!=0.19.0,<=1.15.0
+    - peft >=0.18.0,!=0.11.0
     - cut_cross_entropy
+    - einops
     - packaging >=24.1
-    - transformers >=4.51.3
-    - datasets >=3.4.1
+    - transformers >=4.52.4,!=4.53.0,!=4.54.0,!=4.55.0,!=4.55.1,!=4.57.4,!=4.57.5,!=5.0.0,!=5.1.0,<=5.17.0
+    - datasets >=3.4.1,!=4.0.*,!=4.1.0,!=4.4.*,!=4.5.0,<5.0.0
     - sentencepiece >=0.2.0
     - tqdm
     - psutil
@@ -55,34 +56,44 @@ requirements:
     - msgspec
     - typing_extensions
     - filelock
+    - requests
+  # No run_constrained: the core/huggingface/base/intelgpu extras only restate base deps and
+  # the mlx extra is darwin-arm64-only with == pins that cannot apply to a linux-64 build.
 
 test:
-  # No import test: unsloth_zoo/__init__.py raises ImportError unless `unsloth` is
-  # installed, which is circular (unsloth depends on unsloth_zoo). pip check only.
+  # `import unsloth_zoo` normally requires `unsloth` (circular dep) and a GPU init;
+  # UNSLOTH_ZOO_DISABLE_GPU_INIT=1 (unsloth_zoo/__init__.py) skips both so the package can
+  # be imported standalone. unsloth_zoo_downloads is stdlib-only at import time.
+  imports:
+    - unsloth_zoo_downloads
   commands:
     - pip check
+    - UNSLOTH_ZOO_DISABLE_GPU_INIT=1 python -c "import unsloth_zoo; assert unsloth_zoo.__version__ == '{{ version }}', unsloth_zoo.__version__"
   requires:
     - pip
 
 about:
   home: https://github.com/unslothai/unsloth-zoo
-  license: LGPL-3.0-or-later
-  license_family: LGPL
-  license_file: LICENSE
+  # Core files are LGPL-3.0-or-later (LICENSE); COPYING is AGPL-3.0 and unsloth_zoo/pad_token.py
+  # is AGPL-3.0-only. Vendored under unsloth_zoo/_vendored (see its NOTICE): fla-core 0.5.1
+  # (MIT) and a vLLM Triton kernel (Apache-2.0).
+  license: LGPL-3.0-or-later AND AGPL-3.0-only AND MIT AND Apache-2.0
+  license_family: Other
+  license_file:
+    - LICENSE
+    - COPYING
+    - unsloth_zoo/_vendored/NOTICE
+    - unsloth_zoo/_vendored/fla/LICENSE
+    - unsloth_zoo/_vendored/vllm/LICENSE
   summary: Utilities for Unsloth
   description: |
     Unsloth Zoo provides the shared utilities, model-patching helpers, and
     training/optimization building blocks used by Unsloth to make LLM
     fine-tuning and reinforcement learning faster and more memory efficient.
-  doc_url: https://github.com/unslothai/unsloth-zoo
+  # upstream [project.urls] documentation points at the unsloth repo
+  doc_url: https://github.com/unslothai/unsloth
   dev_url: https://github.com/unslothai/unsloth-zoo
 
 extra:
-  skip-lints:
-    # pytorch/torchao/triton are CBC-pinned runtime-only deps (pure-Python; not linked at build)
-    - cbc_dep_in_run_missing_from_host
-    # No import test: `import unsloth_zoo` raises ImportError unless `unsloth` is installed
-    # (unsloth_zoo/__init__.py), which is circular (unsloth depends on unsloth_zoo). pip check only.
-    - missing_imports_or_run_test_py
   recipe-maintainers:
     - xkong-anaconda
