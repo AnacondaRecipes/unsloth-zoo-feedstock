@@ -61,10 +61,14 @@ requirements:
   # the mlx extra is darwin-arm64-only with == pins that cannot apply to a linux-64 build.
 
 test:
-  # No import test: unsloth_zoo/__init__.py requires `unsloth` to be importable (circular:
-  # unsloth depends on unsloth_zoo) and initialises a GPU. pip check only.
+  # `import unsloth_zoo` normally requires `unsloth` (circular dep) and a GPU init;
+  # UNSLOTH_ZOO_DISABLE_GPU_INIT=1 (unsloth_zoo/__init__.py) skips both so the package can
+  # be imported standalone. unsloth_zoo_downloads is stdlib-only at import time.
+  imports:
+    - unsloth_zoo_downloads
   commands:
     - pip check
+    - UNSLOTH_ZOO_DISABLE_GPU_INIT=1 python -c "import unsloth_zoo; assert unsloth_zoo.__version__ == '{{ version }}', unsloth_zoo.__version__"
   requires:
     - pip
 
@@ -91,9 +95,5 @@ about:
   dev_url: https://github.com/unslothai/unsloth-zoo
 
 extra:
-  skip-lints:
-    # No import test: `import unsloth_zoo` needs `unsloth` installed (circular dependency)
-    # and a GPU at init; pip check only.
-    - missing_imports_or_run_test_py
   recipe-maintainers:
     - xkong-anaconda
