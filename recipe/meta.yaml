@@ -1,5 +1,5 @@
 {% set name = "unsloth_zoo" %}
-{% set version = "2026.10.6" %}
+{% set version = "2026.10.11" %}
 
 package:
   name: {{ name }}
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: f5fa45f17724245c2e4261188be3307384c0d90d6bac2d032332942603e7d4ef
+  sha256: 1f12582295cbcb1e7a505fb79cb5791e758889d038851f13385c03eafc0a52de
 
 build:
   number: 0
@@ -22,19 +22,16 @@ requirements:
   host:
     - python
     - pip
-    # pyproject.toml [build-system].requires: setuptools==84.0.0, setuptools-scm==9.2.0.
-    # 9.2.0 is not on pkgs/main; the version is attr-based so setuptools-scm is inert here.
-    - setuptools 84.0.0
-    - setuptools-scm 9.2.2
+    # pyproject.toml [build-system].requires
+    - setuptools 84.2.1
+    - setuptools-scm 10.3.4
   run:
     - python
-    # pyproject.toml [project.dependencies] at 2026.10.6 (linux-64 bounds; the darwin-arm64
-    # mlx/mlx-lm/mlx-vlm entries do not apply). Upper caps are upstream's and all solve on
-    # pkgs/main now (trl 1.5.1, datasets 4.8.4, transformers 5.17.0, pytorch 2.14.1).
-    - pytorch >=2.4.0,<2.15.0  # analint: cbc_dep_in_run_missing_from_host  # runtime-only, nothing links torch at build
-    - torchao >=0.13.0  # analint: cbc_dep_in_run_missing_from_host  # runtime-only, pure Python
-    - triton >=3.0.0  # analint: cbc_dep_in_run_missing_from_host  # runtime-only, pure Python
-    - tyro
+    # pyproject.toml [project.dependencies] at 2026.10.11 (linux-64 bounds; the darwin-arm64
+    # mlx/mlx-lm/mlx-vlm entries do not apply).
+    - pytorch >=2.4.0,<2.16.0  # analint: cbc_dep_in_run_missing_from_host  # runtime-only, nothing links torch at build
+    - torchao >=0.13.0  # analint: cbc_dep_in_run_missing_from_host  # runtime-only, nothing links it at build
+    - triton >=3.0.0  # analint: cbc_dep_in_run_missing_from_host  # runtime-only, nothing links it at build
     - accelerate >=0.34.1
     - trl >=0.18.2,!=0.19.0,<=1.15.0
     - peft >=0.18.0,!=0.11.0
@@ -57,6 +54,7 @@ requirements:
     - typing_extensions
     - filelock
     - requests
+    - certifi >=2026.10.19
   # No run_constrained: the core/huggingface/base/intelgpu extras only restate base deps and
   # the mlx extra is darwin-arm64-only with == pins that cannot apply to a linux-64 build.
 
