@@ -11,10 +11,12 @@ source:
 
 build:
   number: 0
-  # linux-64 only: triton and cut_cross_entropy (hard runtime deps) exist only for linux-64
-  # on pkgs/main. py 3.10-3.14: upstream requires-python is >=3.9,<3.15 and cut_cross_entropy
-  # is declared for python >=3.10 only.
-  skip: true  # [not linux64 or py<310 or py>314]
+  # Linux only. win-64 and osx-64: cut_cross_entropy (hard runtime dep) has no builds there.
+  # osx-arm64: upstream swaps the torch stack for mlx/mlx-lm/mlx-vlm (a different dep set).
+  # py 3.10-3.14: upstream requires-python is >=3.9,<3.15 and cut_cross_entropy is declared for
+  # python >=3.10 only. linux-aarch64 starts at py3.11: triton and cut_cross_entropy have no
+  # py3.10 linux-aarch64 builds.
+  skip: true  # [not (linux64 or aarch64) or py<310 or py>314 or (aarch64 and py<311)]
   script:
     - {{ PYTHON }} -m pip install . --no-deps --no-build-isolation -vv
 
@@ -27,7 +29,7 @@ requirements:
     - setuptools-scm 10.3.4
   run:
     - python
-    # pyproject.toml [project.dependencies] at 2026.10.11 (linux-64 bounds; the darwin-arm64
+    # pyproject.toml [project.dependencies] at 2026.10.11 (Linux bounds; the darwin-arm64
     # mlx/mlx-lm/mlx-vlm entries do not apply).
     - pytorch >=2.4.0,<2.16.0  # analint: cbc_dep_in_run_missing_from_host  # runtime-only, nothing links torch at build
     - torchao >=0.13.0  # analint: cbc_dep_in_run_missing_from_host  # runtime-only, nothing links it at build
