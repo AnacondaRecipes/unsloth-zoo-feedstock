@@ -3,6 +3,6 @@
 # - cut_cross_entropy 25.1.1 for linux-aarch64 (cut_cross_entropy-feedstock#2, PKG-19530)
 # - triton 3.9.0 for linux-aarch64 (triton-feedstock#20, PKG-19528)
 channels:
-  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/6b074ecc-faa8-4f2d-bbea-6802f81cfa73
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/d291dd6a-3943-4fad-b1d5-7949933f0213
   - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/7d5ccbe5-701e-4520-b9a8-c525ae76c2ca
   - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/6fbe4ac5-5a89-4865-bdd8-683dad46191c
