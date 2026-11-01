@@ -11,11 +11,9 @@ source:
 
 build:
   number: 0
-  # Linux only. win-64 and osx-64: cut_cross_entropy (hard runtime dep) has no builds there.
-  # osx-arm64: upstream swaps the torch stack for mlx/mlx-lm/mlx-vlm (a different dep set).
-  # py 3.10-3.14: upstream requires-python is >=3.9,<3.15 and cut_cross_entropy is declared for
-  # python >=3.10 only. linux-aarch64 starts at py3.11: triton and cut_cross_entropy have no
-  # py3.10 linux-aarch64 builds.
+  # Linux only: no cut_cross_entropy on win/osx-64; osx-arm64 uses upstream's mlx deps instead.
+  # py3.10-3.14 (requires-python <3.15, cut_cross_entropy >=3.10); aarch64 from py3.11, where
+  # triton and cut_cross_entropy start.
   skip: true  # [not (linux64 or aarch64) or py<310 or py>314 or (aarch64 and py<311)]
   script:
     - {{ PYTHON }} -m pip install . --no-deps --no-build-isolation -vv
@@ -57,8 +55,12 @@ requirements:
     - filelock
     - requests
     - certifi >=2026.10.19
-  # No run_constrained: the core/huggingface/base/intelgpu extras only restate base deps and
-  # the mlx extra is darwin-arm64-only with == pins that cannot apply to a linux-64 build.
+  # pyproject.toml [project.optional-dependencies].mlx (unmarked); the core/huggingface/base/
+  # intelgpu extras only restate base deps (triton-windows is win32-only).
+  run_constrained:
+    - mlx ==0.32.4
+    - mlx-lm >=0.31.3,<=0.32.2
+    - mlx-vlm >=0.4.4,<=0.7.11
 
 test:
   # `import unsloth_zoo` normally requires `unsloth` (circular dep) and a GPU init;
@@ -69,6 +71,8 @@ test:
   commands:
     - pip check
     - UNSLOTH_ZOO_DISABLE_GPU_INIT=1 python -c "import unsloth_zoo; assert unsloth_zoo.__version__ == '{{ version }}', unsloth_zoo.__version__"
+    # The import above skips torch; load the torch stack it runs on (CPU import only, no kernels).
+    - python -c "import torch, torchao, triton, cut_cross_entropy"
   requires:
     - pip
 
