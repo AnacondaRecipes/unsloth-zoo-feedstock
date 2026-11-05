@@ -1,6 +1,4 @@
-# TEMPORARY: not on pkgs/main yet. Remove before merge, once both are released:
+# TEMPORARY: not on pkgs/main yet. Remove before merge, once released:
 # - torchao 0.18.0 built against pytorch 2.15 (torchao-feedstock#6, PKG-19521)
-# - cut_cross_entropy 25.1.1 for linux-aarch64 (cut_cross_entropy-feedstock#2, PKG-19530)
 channels:
   - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/d291dd6a-3943-4fad-b1d5-7949933f0213
-  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/7d5ccbe5-701e-4520-b9a8-c525ae76c2ca
