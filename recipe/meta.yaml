@@ -12,9 +12,8 @@ source:
 build:
   number: 0
   # Linux only: no cut_cross_entropy on win/osx-64; osx-arm64 uses upstream's mlx deps instead.
-  # py3.10-3.14 (requires-python <3.15, cut_cross_entropy >=3.10); aarch64 from py3.11, where
-  # triton and cut_cross_entropy start.
-  skip: true  # [not (linux64 or aarch64) or py<310 or py>314 or (aarch64 and py<311)]
+  # py3.10-3.14 (requires-python <3.15, cut_cross_entropy >=3.10).
+  skip: true  # [not (linux64 or aarch64) or py<310 or py>314]
   script:
     - {{ PYTHON }} -m pip install . --no-deps --no-build-isolation -vv
 

@@ -1,4 +1,0 @@
-# TEMPORARY: not on pkgs/main yet. Remove before merge, once released:
-# - torchao 0.18.0 built against pytorch 2.15 (torchao-feedstock#6, PKG-19521)
-channels:
-  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/d291dd6a-3943-4fad-b1d5-7949933f0213
